@@ -1,0 +1,89 @@
+openapi: 3.0.3
+info:
+  title: Pricing Service API
+  version: 1.0.0
+  description: Returns the highest-priority applicable tariff for a product and brand at a given date.
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/v1/prices:
+    get:
+      summary: Retrieve applicable product price
+      operationId: getApplicablePrice
+      parameters:
+        - in: query
+          name: applicationDate
+          required: true
+          description: Application date without timezone (local business time)
+          schema:
+            type: string
+            # LocalDateTime has no UTC offset; do not claim RFC3339 date-time format.
+            pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$'
+          example: '2020-06-14T16:00:00'
+        - in: query
+          name: productId
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+          example: 35455
+        - in: query
+          name: brandId
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+          example: 1
+      responses:
+        '200':
+          description: Applicable tariff
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceResponse'
+        '400':
+          description: Invalid or missing request parameters
+        '404':
+          description: No applicable tariff found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    PriceResponse:
+      type: object
+      required: [productId, brandId, priceList, startDate, endDate, price, currency]
+      properties:
+        productId:
+          type: integer
+          format: int64
+        brandId:
+          type: integer
+          format: int64
+        priceList:
+          type: integer
+          format: int64
+        startDate:
+          type: string
+          example: '2020-06-14T15:00:00'
+        endDate:
+          type: string
+          example: '2020-06-14T18:30:00'
+        price:
+          type: number
+          multipleOf: 0.01
+          example: 25.45
+        currency:
+          type: string
+          example: EUR
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: PRICE_NOT_FOUND
+        message:
+          type: string
